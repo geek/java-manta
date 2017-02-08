@@ -7,8 +7,6 @@ import org.apache.commons.lang3.exception.ContextedRuntimeException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.stream.Stream;
 
 
@@ -16,12 +14,10 @@ import java.util.stream.Stream;
 * Usage: set the mantaUsername, privateKeyPath, publicKeyId, and multipartServer with your own values.
  */
 public class ServerMultipart {
-    private static String mantaUsername = System.getenv().get("MANTA_USERNAME");
-    private static int numberOf5MBParts = Integer.parseInt(System.getenv().get("MANTA_PARTS"));
+    private static String mantaUsername = System.getenv().getOrDefault("MANTA_USERNAME", "mantaUsername");
+    private static int numberOf5MBParts = Integer.parseInt(System.getenv().getOrDefault("MANTA_PARTS", "2"));
 
     public static void main(String... args) {
-
-
         String privateKeyPath = System.getenv().get("MANTA_KEYPATH");
         String publicKeyId = System.getenv().get("MANTA_KEYID");
         String multipartServer = System.getenv().get("MANTA_SERVER");
