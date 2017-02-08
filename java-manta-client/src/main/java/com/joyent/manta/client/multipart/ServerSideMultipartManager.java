@@ -544,8 +544,10 @@ public class ServerSideMultipartManager extends AbstractMultipartManager
 
         final int expectedStatusCode = HttpStatus.SC_CREATED;
 
+        long start = System.currentTimeMillis();
         try (CloseableHttpResponse response = connectionContext.getHttpClient().execute(post)) {
             StatusLine statusLine = response.getStatusLine();
+            System.out.println("Total commit response time: " + (System.currentTimeMillis() - start) + "ms");
 
             validateStatusCode(expectedStatusCode, statusLine.getStatusCode(),
                     "Unable to create multipart upload", post,

@@ -56,7 +56,9 @@ public class ServerMultipart {
             MantaMultipartUploadTuple[] partsArray = new MantaMultipartUploadTuple[parts.size()];
             parts.toArray(partsArray);
             Stream<MantaMultipartUploadTuple> partsStream = Arrays.stream(partsArray);
+            long start = System.currentTimeMillis();
             multipart.complete(upload, partsStream);
+            System.out.println("Total commit time: " + (System.currentTimeMillis() - start) + "ms");
 
             System.out.println(uploadObject + " is now assembled!");
         } catch (IOException e) {
