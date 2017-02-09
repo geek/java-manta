@@ -14,6 +14,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.exception.ContextedRuntimeException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.stream.Stream;
@@ -22,13 +23,14 @@ import java.util.stream.Stream;
 * Usage: set the mantaUsername, privateKeyPath, publicKeyId, and multipartServer with your own values.
  */
 public class ClientEncryptionServerMultipart {
-    private static String mantaUsername = "USERNAME";
+    private static String mantaUsername = System.getenv().get("MANTA_USERNAME");
+    private static int numberOf5MBParts = Integer.parseInt(System.getenv().getOrDefault("MANTA_PARTS", "2"));
 
     public static void main(String... args) {
 
-        String privateKeyPath = "PATH/.ssh/id_rsa";
-        String publicKeyId = "04:92:7b:23:bc:08:4f:d7:3b:5a:38:9e:4a:17:2e:df";
-        String multipartServer = "https://MANTA_MULTIPART_SERVER";
+        String privateKeyPath = System.getenv().get("MANTA_KEYPATH");
+        String publicKeyId = System.getenv().get("MANTA_KEYID");
+        String multipartServer = System.getenv().get("MANTA_SERVER");
 
         ConfigContext config = new ChainedConfigContext(
                 new DefaultsConfigContext(),
@@ -61,13 +63,19 @@ public class ClientEncryptionServerMultipart {
             metadata.put("e-secretkey", "My Secret Value");
             EncryptedMultipartUpload<ServerSideMultipartUpload> upload =
                     multipart.initiateUpload(uploadObject, metadata);
-            MantaMultipartUploadPart part1 = multipart.uploadPart(upload, 1, RandomUtils.nextBytes(5242880));
-            MantaMultipartUploadPart part2 = multipart.uploadPart(upload, 2, RandomUtils.nextBytes(1000000));
+            ArrayList<MantaMultipartUploadTuple> parts = new ArrayList<>();
 
-            // Complete the process by instructing Manta to assemble the final object from its parts
-            MantaMultipartUploadTuple[] parts = new MantaMultipartUploadTuple[] { part1, part2 };
-            Stream<MantaMultipartUploadTuple> partsStream = Arrays.stream(parts);
+            for (int i = 0; i < numberOf5MBParts; i++) {
+                MantaMultipartUploadPart part = multipart.uploadPart(upload, i + 1, RandomUtils.nextBytes(5242880));
+                parts.add(part);
+            }
+
+            MantaMultipartUploadTuple[] partsArray = new MantaMultipartUploadTuple[parts.size()];
+            parts.toArray(partsArray);
+            Stream<MantaMultipartUploadTuple> partsStream = Arrays.stream(partsArray);
+            long start = System.currentTimeMillis();
             multipart.complete(upload, partsStream);
+            System.out.println("Total commit time: " + (System.currentTimeMillis() - start) + "ms");
 
             System.out.println(uploadObject + " is now assembled!");
         } catch (IOException e) {
