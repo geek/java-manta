@@ -51,7 +51,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>ServerMultipart</mainClass>
+                            <mainClass>ClientEncryptionServerMultipart</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
