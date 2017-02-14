@@ -27,7 +27,7 @@ public class EncryptionContext {
     /**
      * Secret key to encrypt stream with.
      */
-    private final transient SecretKey key;
+    private transient SecretKey key;
 
     /**
      * Attributes of the cipher used for encryption.
@@ -39,6 +39,11 @@ public class EncryptionContext {
      */
     private final Cipher cipher;
 
+
+    public EncryptionContext(final SupportedCipherDetails cipherDetails) {
+        this.cipherDetails = cipherDetails;
+        this.cipher = cipherDetails.getCipher();
+    }
 
     /**
      * Creates a new instance of an encryption context.
@@ -77,6 +82,24 @@ public class EncryptionContext {
 
     public Cipher getCipher() {
         return cipher;
+    }
+
+    public void setSecretKey(SecretKey key) {
+        @SuppressWarnings("MagicNumber")
+        final int keyBits = key.getEncoded().length << 3;
+
+        if (keyBits != cipherDetails.getKeyLengthBits()) {
+            String msg = "Mismatch between algorithm definition and secret key size";
+            MantaClientEncryptionException e = new MantaClientEncryptionException(msg);
+            e.setContextValue("cipherDetails", cipherDetails.toString());
+            e.setContextValue("secretKeyAlgorithm", key.getAlgorithm());
+            e.setContextValue("secretKeySizeInBits", String.valueOf(keyBits));
+            e.setContextValue("expectedKeySizeInBits", cipherDetails.getKeyLengthBits());
+            throw e;
+        }
+
+        this.key = key;
+        initializeCipher();
     }
 
     /**

@@ -10,13 +10,12 @@ package com.joyent.manta.serialization;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.joyent.manta.client.crypto.AesCtrCipherDetails;
 import com.joyent.manta.client.crypto.EncryptionContext;
 import com.joyent.manta.client.crypto.SecretKeyUtils;
 import com.joyent.manta.client.crypto.SupportedCipherDetails;
 import com.joyent.manta.client.multipart.EncryptionState;
 import com.joyent.manta.config.DefaultsConfigContext;
-import org.objenesis.instantiator.ObjectInstantiator;
-import org.objenesis.strategy.InstantiatorStrategy;
 import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -29,14 +28,18 @@ import java.util.Base64;
 
 @Test
 public class EncryptionStateSerializerTest {
+    private static final byte[] SECRET_KEY_BYTES =
+            Base64.getDecoder().decode("qAnCNUmmFjUTtImNGv241Q==");
+
     private Kryo kryo = new Kryo();
     private EncryptionState encryptionState;
 
     @BeforeClass
     public void setup() {
-        SupportedCipherDetails cipherDetails = DefaultsConfigContext.DEFAULT_CIPHER;
-        byte[] keyBytes = Base64.getDecoder().decode("qAnCNUmmFjUTtImNGv241Q==");
-        SecretKey secretKey = SecretKeyUtils.loadKey(keyBytes, cipherDetails);
+        kryo.register(EncryptionState.class, new EncryptionStateSerializer(kryo));
+
+        SupportedCipherDetails cipherDetails = AesCtrCipherDetails.INSTANCE_128_BIT;
+        SecretKey secretKey = loadSecretKey(cipherDetails);
         EncryptionContext encryptionContext = new EncryptionContext(secretKey, cipherDetails);
         this.encryptionState = new EncryptionState(encryptionContext);
     }
@@ -52,5 +55,9 @@ public class EncryptionStateSerializerTest {
         input.close();
 
         //AssertJUnit.assertEquals(encryptionState.getEncryptionContext().getSecretKey(), deserializedEncryptionState.getEncryptionContext().getSecretKey());
+    }
+
+    private SecretKey loadSecretKey(final SupportedCipherDetails cipherDetails) {
+        return SecretKeyUtils.loadKey(SECRET_KEY_BYTES, cipherDetails);
     }
 }
