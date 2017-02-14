@@ -50,7 +50,6 @@ public class EncryptionContextSerializer extends AbstractManualSerializer<Encryp
     @Override
     public EncryptionContext read(final Kryo kryo, final Input input, final Class<EncryptionContext> type) {
         final String cipherId = kryo.readObject(input, String.class);
-        final Object cipher = kryo.readObject(input, Cipher.class);
         SupportedCipherDetails cipherDetails = SupportedCiphersLookupMap.INSTANCE.get(cipherId);
 
         final EncryptionContext encryptionContext = new EncryptionContext(cipherDetails);
